@@ -1,20 +1,18 @@
-﻿namespace Convert2Kindle
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.IO;
-    using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
 
+namespace Convert2Kindle
+{
     public static class Program
     {
         public static void Main()
         {
             try
             {
-                var result = WalkDirectory(Environment.CurrentDirectory, new List<string>());
-                var success = result.Item1;
-                var convertedCount = result.Item2;
+                var (success, convertedCount) = WalkDirectory(Environment.CurrentDirectory, new List<string>());
 
                 if (success)
                 {
@@ -47,7 +45,7 @@
             Console.ReadKey();
         }
 
-        private static Tuple<bool, int> WalkDirectory(string dir, List<string> visitedDirs)
+        private static (bool Success, int ConvertedCount) WalkDirectory(string dir, List<string> visitedDirs)
         {
             var success = true;
             var convertedCount = 0;
@@ -55,7 +53,7 @@
             if (visitedDirs.Contains(dir))
             {
                 Console.WriteLine("Recursive path found: \"{0}\", returning...", dir);
-                return new Tuple<bool, int>(true, 0);
+                return (Success: true, ConvertedCount: 0);
             }
 
             visitedDirs.Add(dir);
@@ -73,8 +71,7 @@
                 if (Convert(input, output))
                 {
                     ++convertedCount;
-                }
-                else
+                } else
                 {
                     success = false;
                     Console.Write("Press any key to continue . . . ");
@@ -85,11 +82,11 @@
             foreach (var subdir in Directory.GetDirectories(dir))
             {
                 var result = WalkDirectory(subdir, visitedDirs);
-                success &= result.Item1;
-                convertedCount += result.Item2;
+                success &= result.Success;
+                convertedCount += result.ConvertedCount;
             }
 
-            return new Tuple<bool, int>(success, convertedCount);
+            return (success, convertedCount);
         }
 
         private static bool Convert(string input, string output)
@@ -97,17 +94,17 @@
             output = Path.GetFileName(output);
 
             var startInfo = new ProcessStartInfo
-                {
-                    FileName = "kindlegen.exe",
-                    Arguments = $"\"{input}\" -o \"{output}\"",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true
-                };
+            {
+                FileName = "kindlegen.exe",
+                Arguments = $"\"{input}\" -o \"{output}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true
+            };
 
             var proc = new Process
-                {
-                    StartInfo = startInfo
-                };
+            {
+                StartInfo = startInfo
+            };
 
             Console.WriteLine("Converting with command: {0} {1}", startInfo.FileName, startInfo.Arguments);
 
